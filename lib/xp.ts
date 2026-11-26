@@ -9,6 +9,11 @@ export const XP = {
   shutdown: 60,
   habit: 0, // per-habit XP comes from HabitDef.xp
   problem: { EASY: 30, MEDIUM: 60, HARD: 120 },
+  workoutClear: 150,
+  agentMerged: 60,
+  hackathonSubmit: 400,
+  application: 40,
+  stageAdvance: 120,
 } as const;
 
 export function xpToNext(level: number): number {
@@ -59,6 +64,12 @@ const REASON_STAT: Record<string, StatKey | undefined> = {
   "dsa.easy": "INT",
   "dsa.medium": "INT",
   "dsa.hard": "INT",
+  "dsa.review": "INT",
+  "workout.clear": "STR",
+  "agent.merged": "AGI",
+  "hackathon.submit": "AGI",
+  "app.sent": "AGI",
+  "app.stage": "AGI",
 };
 
 export type AwardResult = {
@@ -93,28 +104,31 @@ export async function award(
   const multiplier = raw || amount <= 0 ? 1 : streakMultiplier(hunter.streak);
   const final = Math.round(amount * multiplier);
 
-  try {
-    await tx.xpLedger.create({
-      data: {
-        dayId,
-        amount: final,
-        reason,
-        sourceId,
-        stat: stat ?? REASON_STAT[reason] ?? null,
-      },
-    });
-  } catch (err) {
-    if (isUniqueViolation(err)) {
-      return {
-        awarded: 0,
-        duplicated: true,
-        leveledUp: false,
-        level: before.level,
-        freePoints: hunter.freePoints,
-      };
-    }
-    throw err;
+  // Check before inserting: a caught P2002 still aborts the surrounding Postgres
+  // transaction, which would take every later write in the same action down with it.
+  const existing = await tx.xpLedger.findUnique({
+    where: { reason_sourceId: { reason, sourceId } },
+    select: { id: true },
+  });
+  if (existing) {
+    return {
+      awarded: 0,
+      duplicated: true,
+      leveledUp: false,
+      level: before.level,
+      freePoints: hunter.freePoints,
+    };
   }
+
+  await tx.xpLedger.create({
+    data: {
+      dayId,
+      amount: final,
+      reason,
+      sourceId,
+      stat: stat ?? REASON_STAT[reason] ?? null,
+    },
+  });
 
   const nextTotal = hunter.totalXp + final;
   const after = levelFromXp(nextTotal);
@@ -151,11 +165,3 @@ export async function award(
   };
 }
 
-export function isUniqueViolation(err: unknown): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "code" in err &&
-    (err as { code?: string }).code === "P2002"
-  );
-}

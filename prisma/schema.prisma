@@ -93,6 +93,8 @@ model DayLog {
   sessions      SlotSession[]
   habitLogs     HabitLog[]
   xp            XpLedger[]
+  workouts      Workout[]
+  agents        Agent[]
 
   @@index([date])
 }
@@ -149,6 +151,7 @@ model Round {
   endedAt    DateTime?
   focusedMs  Int         @default(0)
   status     RoundStatus @default(PENDING)
+  notifiedAt DateTime?
 
   @@unique([sessionId, index])
 }
@@ -174,6 +177,235 @@ model HabitLog {
   doneAt  DateTime @default(now())
 
   @@unique([dayId, habitId])
+}
+
+// ---------- workout dungeon ----------
+
+enum WorkoutSplit {
+  A
+  B
+}
+
+enum ExerciseUnit {
+  REPS
+  SECONDS
+}
+
+model Exercise {
+  id           String       @id @default(cuid())
+  slug         String       @unique
+  name         String
+  split        WorkoutSplit
+  unit         ExerciseUnit @default(REPS)
+  sets         Int          @default(3)
+  currentValue Int
+  baseValue    Int
+  increment    Int          @default(5)
+  cap          Int?
+  xp           Int          @default(10)
+  order        Int          @default(0)
+  items        WorkoutItem[]
+}
+
+model Workout {
+  id          String       @id @default(cuid())
+  dayId       String?
+  day         DayLog?      @relation(fields: [dayId], references: [id], onDelete: SetNull)
+  date        DateTime     @db.Date
+  split       WorkoutSplit
+  startedAt   DateTime     @default(now())
+  completedAt DateTime?
+  xp          Int          @default(0)
+  items       WorkoutItem[]
+
+  @@unique([date, split])
+  @@index([date])
+}
+
+model WorkoutItem {
+  id         String   @id @default(cuid())
+  workoutId  String
+  workout    Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  position   Int
+  setIndex   Int
+  value      Int
+  doneAt     DateTime?
+
+  @@unique([workoutId, exerciseId, setIndex])
+}
+
+// ---------- DSA arena ----------
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum ProblemStatus {
+  TODO
+  SOLVED
+  REVISIT
+}
+
+enum Pattern {
+  ARRAYS
+  STRINGS
+  HASHMAP
+  TWO_POINTERS
+  SLIDING_WINDOW
+  BINARY_SEARCH
+  STACK
+  LINKED_LIST
+  TREES
+  HEAP
+  GRAPHS
+  DP
+  GREEDY
+  BACKTRACKING
+  TRIES
+  BITS
+  MATH
+  INTERVALS
+  DESIGN
+}
+
+enum ReviewGrade {
+  AGAIN
+  HARD
+  GOOD
+  EASY
+}
+
+model Problem {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  title        String
+  url          String?
+  difficulty   Difficulty    @default(MEDIUM)
+  pattern      Pattern
+  status       ProblemStatus @default(TODO)
+  attempts     Int           @default(0)
+  notes        String?
+  ease         Float         @default(2.5)
+  intervalDays Int           @default(0)
+  dueAt        DateTime?     @db.Date
+  solvedAt     DateTime?
+  createdAt    DateTime      @default(now())
+  reviews      Review[]
+
+  @@index([dueAt])
+  @@index([pattern])
+}
+
+model Review {
+  id           String      @id @default(cuid())
+  problemId    String
+  problem      Problem     @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  grade        ReviewGrade
+  intervalDays Int
+  at           DateTime    @default(now())
+
+  @@index([problemId])
+}
+
+// ---------- hackathon war room ----------
+
+enum AgentStatus {
+  DISPATCHED
+  RUNNING
+  REVIEW
+  MERGED
+  ABANDONED
+}
+
+enum ProjectPhase {
+  IDEA
+  BUILD
+  POLISH
+  SUBMITTED
+}
+
+model Project {
+  id        String       @id @default(cuid())
+  slug      String       @unique
+  name      String
+  phase     ProjectPhase @default(IDEA)
+  deadline  DateTime?    @db.Date
+  repoUrl   String?
+  notes     String?
+  createdAt DateTime     @default(now())
+  agents    Agent[]
+  checklist ChecklistItem[]
+}
+
+model ChecklistItem {
+  id        String    @id @default(cuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  label     String
+  order     Int       @default(0)
+  doneAt    DateTime?
+
+  @@index([projectId, order])
+}
+
+model Agent {
+  id           String      @id @default(cuid())
+  dayId        String?
+  day          DayLog?     @relation(fields: [dayId], references: [id], onDelete: SetNull)
+  projectId    String?
+  project      Project?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  date         DateTime    @db.Date
+  title        String
+  note         String?
+  status       AgentStatus @default(DISPATCHED)
+  needsMe      Boolean     @default(false)
+  dispatchedAt DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  mergedAt     DateTime?
+  xp           Int         @default(0)
+
+  @@index([date, status])
+}
+
+// ---------- applications ----------
+
+enum AppStage {
+  APPLIED
+  OA
+  INTERVIEW
+  OFFER
+  REJECTED
+}
+
+model Application {
+  id        String   @id @default(cuid())
+  company   String
+  role      String?
+  stage     AppStage @default(APPLIED)
+  appliedAt DateTime @db.Date
+  source    String?
+  url       String?
+  notes     String?
+  updatedAt DateTime @updatedAt
+
+  @@index([stage])
+  @@index([appliedAt])
+}
+
+// ---------- web push ----------
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+  lastSentAt DateTime?
 }
 
 model XpLedger {

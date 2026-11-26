@@ -11,6 +11,7 @@ import { NowCard } from "@/components/now-card";
 import { QuestBoard } from "@/components/quest-board";
 import { Timeline } from "@/components/timeline";
 import { SystemPanel } from "@/components/system-panel";
+import { SystemLink } from "@/components/system-link";
 
 export default function Page() {
   return (
@@ -24,7 +25,7 @@ function DashboardSkeleton() {
   return (
     <div className="space-y-4">
       <div className="panel h-[86px] animate-pulse" />
-      <div className="grid gap-4 lg:grid-cols-[1.15fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_1fr]">
         <div className="panel h-64 animate-pulse" />
         <div className="panel h-64 animate-pulse" />
       </div>
@@ -98,7 +99,7 @@ async function Dashboard() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.15fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_1fr]">
         <div className="space-y-4">
           <NowCard
             block={current}
@@ -181,6 +182,10 @@ async function Dashboard() {
             <div className="border-t border-line px-4 py-2 text-[10px] text-muted">
               today {localDateKey()} · n={week.length}
             </div>
+          </SystemPanel>
+
+          <SystemPanel title="System link" right="pwa · push" accent="#8B5CF6">
+            <SystemLink />
           </SystemPanel>
         </div>
       </div>

@@ -27,7 +27,7 @@ export function StatusBar({
   const workRatio = Math.max(0, Math.min(1, workTarget > 0 ? focusMin / workTarget : 0));
 
   return (
-    <div className="panel panel-brackets scanline relative overflow-hidden">
+    <div className="panel panel-brackets relative overflow-hidden">
       <div className="flex flex-wrap items-center gap-4 px-4 py-3 md:gap-6 md:px-5">
         <div className="flex items-baseline gap-2">
           <span className="label">LV</span>
@@ -86,6 +86,8 @@ export function StatusBar({
           {handle.toUpperCase()} — work target {workRatio >= 1 ? "cleared" : `${Math.round(workRatio * 100)}%`}
         </span>
       </div>
+
+      <div className="scanline" aria-hidden />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 > A single-user, Solo-Leveling-styled operating system for one hunter: 12h of deep work, a calisthenics dungeon, parallel hackathon agents, and a DSA grind aimed at a lucrative SDE-1 offer.
 
-**Status:** v1 core shipped (M1–M4) — see `README.md`. Dungeon, DSA arena, shadow lanes and the day heatmap are the v1.1 queue (§10).
+**Status:** v1 + v1.1 shipped — core loop (M1–M4), day heatmap, workout dungeon, DSA arena, shadow-agent lanes with the hackathon war room (M7), the readiness/funnel report (M8) and PWA + web push. See `README.md` for the live feature table; §10 lists what is left.
 **Owner:** you (solo dev, solo user)
 **Docs:** this file = product + build plan. `docs/technical-spec.md` = stack, schema, timer engine, animation spec.
 
@@ -358,11 +358,25 @@ social/leaderboards · mobile native app · AI coach · calendar sync · multi-u
 | Deployment | **Vercel** (+ a hosted Postgres, e.g. Neon). Single-user, no auth — gate it with one shared password in `middleware.ts`. |
 | Day heatmap (blocks × colour) | **Deferred to v1.1.** `TYPE_COLOR` already assigns a colour per block type, so it is a rendering job, not a data one. |
 
-### v1.1 backlog (in order)
+### Shipped after the core (26 Nov 2026)
 
-1. Day heatmap — per-day block grid, and a month grid of focus intensity.
-2. Workout dungeon (M5) with auto-progression.
-3. DSA arena (M6) + spaced repetition queue + pattern radar.
-4. Shadow-agent lanes + hackathon war room (M7).
-5. Status window analytics (M8): application funnel, focus heatmap, readiness score.
-6. PWA install + web push for round-end alerts when the tab is closed.
+- **Day heatmap** (`/heatmap`) — 24h strip with every block in its own colour, per-block focus
+  bars, and a 12-week intensity grid. See `lib/heat.ts` for the ramp.
+- **Workout dungeon** (`/dungeon`) — two floors a day, per-set logging, 150 XP per clear, and
+  auto-progression (a fully-hit exercise gains its increment, up to a cap).
+- **DSA arena** (`/arena`) — problem log with pattern tagging, SM-2-lite review queue (AGAIN / HARD /
+  GOOD / EASY), and pattern coverage against an 8-problem target.
+- **War room** (`/warroom`) — shadow-agent lanes with explicit states (`DISPATCHED → RUNNING →
+  REVIEW → MERGED`, 60 XP on merge) and a `needsMe` flag, plus hackathon projects with a deadline,
+  phase, and a submission checklist that blocks the submit button (400 XP).
+- **Report** (`/report`) — SDE-1 readiness out of 100 (problems 40 · patterns 20 · cohort 15 ·
+  projects 15 · applications 10), the application funnel with per-stage XP, and DSA coverage.
+- **PWA + push** — installable app (manifest + service worker), per-device push subscriptions, and
+  `POST /api/push/round-end` (bearer `CRON_SECRET`) for round-end alerts when the tab is closed.
+
+### Still open
+
+1. Remaining M8 charts: XP sparkline, workout volume trend, context-switch trend, weekly review.
+2. M9 settings: XP tuning, penalty-quest toggle, JSON export/import, reduced-motion toggle.
+3. Vercel cron is daily on Hobby, so round-end pings need a 1-minute external scheduler hitting
+   `/api/push/round-end`. Everything else works without it (in-tab notifications + toasts).

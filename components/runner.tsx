@@ -7,6 +7,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { beginRound, finishRound, logSwitch } from "@/app/actions/session";
 import { formatClock, progress, remainingMs } from "@/lib/timer";
 import { play, unlockAudio } from "@/lib/sound";
+import { notifyRoundEnd } from "@/lib/notify";
 import { LevelUpOverlay } from "@/components/level-up";
 
 export type RunnerRound = {
@@ -91,6 +92,9 @@ export function Runner({
       );
 
       if (mode !== "abandon" || res.completed) play("roundEnd");
+      if (res.completed && document.hidden) {
+        void notifyRoundEnd("ROUND COMPLETE", `${blockTitle} · log it before you drift.`, "/");
+      }
       if (res.awarded > 0) {
         setToast(`+${res.awarded} XP`);
         window.setTimeout(() => setToast(null), 1600);
@@ -98,7 +102,7 @@ export function Runner({
       if (res.leveledUp) setLevelUp(res.level);
       setBusy(false);
     },
-    [],
+    [blockTitle],
   );
 
   // Round hit zero (possibly while the tab was closed).
@@ -142,7 +146,7 @@ export function Runner({
     <div className="mx-auto max-w-2xl space-y-4">
       <LevelUpOverlay level={levelUp} onDone={() => setLevelUp(null)} />
 
-      <div className="panel panel-brackets scanline relative overflow-hidden">
+      <div className="panel panel-brackets relative overflow-hidden">
         <div className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
           <div className="min-w-0">
             <div className="label">slot running</div>
@@ -232,6 +236,8 @@ export function Runner({
             DISTRACTED +1
           </button>
         </div>
+
+        <div className="scanline" aria-hidden />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
