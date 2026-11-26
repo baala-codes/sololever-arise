@@ -1,0 +1,17 @@
+{
+  "name": "ARISE — Personal Leveling System",
+  "short_name": "ARISE",
+  "description": "A Solo-Leveling styled operating system for one hunter.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0E14",
+  "theme_color": "#4DA3FF",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

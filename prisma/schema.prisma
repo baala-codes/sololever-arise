@@ -1,0 +1,191 @@
+// ARISE — data contract
+// Single-user app: Hunter is a singleton row (id = "local").
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Hunter {
+  id         String      @id @default("local")
+  handle     String      @default("Hunter")
+  level      Int         @default(1)
+  totalXp    Int         @default(0)
+  freePoints Int         @default(0)
+  streak     Int         @default(0)
+  bestStreak Int         @default(0)
+  slotDebt   Int         @default(0)
+  createdAt  DateTime    @default(now())
+  stats      StatPoint[]
+  days       DayLog[]
+}
+
+enum StatKey {
+  STR
+  INT
+  AGI
+  VIT
+  PER
+}
+
+model StatPoint {
+  id       String   @id @default(cuid())
+  hunterId String
+  hunter   Hunter   @relation(fields: [hunterId], references: [id], onDelete: Cascade)
+  key      StatKey
+  allocated Int     @default(0)
+  xp       Int      @default(0)
+
+  @@unique([hunterId, key])
+}
+
+enum Load {
+  MINIMUM
+  STANDARD
+  SPRINT
+}
+
+enum BlockType {
+  RITUAL
+  DEEP_WORK
+  LEARNING
+  MEAL
+  RECOVERY
+  PHYSICAL
+  SOCIAL
+  SLEEP
+}
+
+enum SlotProfile {
+  DEEP
+  CLASSIC
+  MICRO
+  NONE
+}
+
+model DayLog {
+  id            String     @id @default(cuid())
+  hunterId      String
+  hunter        Hunter     @relation(fields: [hunterId], references: [id], onDelete: Cascade)
+  date          DateTime   @unique @db.Date
+  load          Load       @default(STANDARD)
+  sleepHours    Float?
+  sleepQuality  Int?
+  energy        Int?
+  mood          Int?
+  weightKg      Float?
+  focusTarget   String?
+  checkedInAt   DateTime?
+  lateCheckIn   Boolean    @default(false)
+  shutdownAt    DateTime?
+  journal       String?
+  top3          Json?
+  focusMinutes  Int        @default(0)
+  workTargetMin Int        @default(660)
+  score         Int?
+  closedAt      DateTime?
+  xpTotal       Int        @default(0)
+  blocks        Block[]
+  sessions      SlotSession[]
+  habitLogs     HabitLog[]
+  xp            XpLedger[]
+
+  @@index([date])
+}
+
+model Block {
+  id          String       @id @default(cuid())
+  dayId       String
+  day         DayLog       @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  order       Int
+  title       String
+  subtitle    String?
+  startMin    Int
+  endMin      Int
+  type        BlockType
+  slotProfile SlotProfile @default(NONE)
+  microTasks  Json?
+  doneAt      DateTime?
+  sessions    SlotSession[]
+
+  @@index([dayId, order])
+}
+
+enum RoundStatus {
+  PENDING
+  RUNNING
+  DONE
+  ABANDONED
+}
+
+model SlotSession {
+  id        String   @id @default(cuid())
+  dayId     String
+  day       DayLog  @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  blockId   String
+  block     Block   @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+  targetMin Int
+  focusMin  Int      @default(0)
+  switches  Int      @default(0)
+  rounds    Round[]
+
+  @@index([dayId])
+}
+
+model Round {
+  id         String      @id @default(cuid())
+  sessionId  String
+  session    SlotSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  index      Int
+  kind       String
+  plannedMs  Int
+  startedAt  DateTime?
+  endedAt    DateTime?
+  focusedMs  Int         @default(0)
+  status     RoundStatus @default(PENDING)
+
+  @@unique([sessionId, index])
+}
+
+model HabitDef {
+  id       String     @id @default(cuid())
+  slug     String     @unique
+  label    String
+  atMin    Int?
+  xp       Int        @default(20)
+  core     Boolean    @default(false)
+  wantsEgg Boolean    @default(false)
+  order    Int        @default(0)
+  logs     HabitLog[]
+}
+
+model HabitLog {
+  id      String   @id @default(cuid())
+  dayId   String
+  day     DayLog  @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  habitId String
+  habit   HabitDef @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  doneAt  DateTime @default(now())
+
+  @@unique([dayId, habitId])
+}
+
+model XpLedger {
+  id        String   @id @default(cuid())
+  dayId     String?
+  day       DayLog?  @relation(fields: [dayId], references: [id], onDelete: SetNull)
+  amount    Int
+  reason    String
+  sourceId  String   @default("")
+  stat      StatKey?
+  createdAt DateTime @default(now())
+
+  @@unique([reason, sourceId])
+  @@index([createdAt])
+}

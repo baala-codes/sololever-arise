@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0a0e14;
+  --color-panel: #11161f;
+  --color-panel2: #0d121a;
+  --color-line: #1e2733;
+  --color-line2: #283344;
+  --color-system: #4da3ff;
+  --color-shadow: #8b5cf6;
+  --color-danger: #ff3b4e;
+  --color-ok: #2bd98a;
+  --color-amber: #e8a33d;
+  --color-fg: #d6e2f0;
+  --color-muted: #8496ad;
+  --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-bg);
+  }
+
+  body {
+    background-color: var(--color-bg);
+    background-image:
+      linear-gradient(rgba(30, 39, 51, 0.55) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30, 39, 51, 0.55) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-attachment: fixed;
+    color: var(--color-fg);
+    font-family: var(--font-mono);
+    font-feature-settings: "tnum" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: rgba(77, 163, 255, 0.28);
+  }
+
+  button {
+    cursor: pointer;
+  }
+}
+
+/* ---------- System chrome ---------- */
+
+.panel {
+  position: relative;
+  background: color-mix(in srgb, var(--color-panel) 88%, transparent);
+  border: 1px solid var(--color-line);
+}
+
+.panel-brackets::before,
+.panel-brackets::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: var(--color-system);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.panel-brackets::before {
+  top: -1px;
+  left: -1px;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+
+.panel-brackets::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+}
+
+.label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.hairline {
+  height: 1px;
+  background: var(--color-line);
+}
+
+.grid-fade {
+  background-image: radial-gradient(ellipse at top, rgba(77, 163, 255, 0.08), transparent 60%);
+}
+
+/* ---------- Motion ---------- */
+
+@keyframes pulse-ring {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.ring-live {
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+
+@keyframes scan {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+.scanline {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.scanline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to bottom, transparent, rgba(77, 163, 255, 0.05), transparent);
+  animation: scan 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring-live,
+  .scanline::after {
+    animation: none;
+  }
+}
